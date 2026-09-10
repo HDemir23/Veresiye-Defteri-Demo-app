@@ -21,6 +21,8 @@ import {
   CalendarDays,
   Minus,
   Save,
+  FileText,
+  FileSpreadsheet,
   Menu as MenuIcon,
 } from 'lucide-react';
 import type {
@@ -94,6 +96,51 @@ function startFor(period: Period) {
 
 function lineTotal(l: OrderLine) {
   return l.priceSnapshot * l.qty;
+}
+
+const reportPeriodLabel: Record<Period, string> = {
+  day: 'Gün Sonu',
+  week: 'Haftalık',
+  month: 'Aylık',
+};
+
+const reportFileLabel: Record<Period, string> = {
+  day: 'gun-sonu',
+  week: 'haftalik',
+  month: 'aylik',
+};
+
+const fullDate = (date: Date) =>
+  new Intl.DateTimeFormat('tr-TR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).format(date);
+
+const reportRangeLabel = (period: Period, start: Date) =>
+  period === 'day'
+    ? fullDate(start)
+    : `${fullDate(start)} - ${fullDate(new Date())}`;
+
+const escapeHtml = (value: string | number) =>
+  String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+const escapeXml = (value: string | number) => escapeHtml(value);
+
+function downloadFile(content: BlobPart[], filename: string, type: string) {
+  const url = URL.createObjectURL(new Blob(content, { type }));
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function loadData(): AppData {
@@ -1489,6 +1536,7 @@ function QuickAdd({
 
 function Reports({ data }: { data: AppData }) {
   const [period, setPeriod] = useState<Period>('day');
+  const [exportError, setExportError] = useState('');
   const start = startFor(period);
   const inRange = (s: string) => new Date(s) >= start;
   const lines = data.orderLines.filter((l) => inRange(l.createdAt));
@@ -1539,13 +1587,257 @@ function Reports({ data }: { data: AppData }) {
     .filter((x) => x.charge || x.payment)
     .sort((a, b) => b.charge + b.payment - (a.charge + a.payment));
 
+  const customerNames = new Map(data.customers.map((c) => [c.id, c.name]));
+  const ordersById = new Map(data.orders.map((o) => [o.id, o]));
+  const movements = [
+    ...lines.map((line) => {
+      const order = ordersById.get(line.orderId);
+      return {
+        date: line.createdAt,
+        customer: order ? customerNames.get(order.customerId) || '-' : '-',
+        type: 'Veresiye',
+        detail: `${line.qty} x ${line.nameSnapshot}`,
+        amount: -lineTotal(line),
+      };
+    }),
+    ...payments.map((payment) => ({
+      date: payment.paidAt,
+      customer: customerNames.get(payment.customerId) || '-',
+      type: 'Tahsilat / Yükleme',
+      detail: payment.note || 'Ödeme',
+      amount: payment.amount,
+    })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
+
+  const periodRange = reportRangeLabel(period, start);
+  const filename = `lokanta-raporu-${reportFileLabel[period]}-${dateOnly()}`;
+  const periodDifference = paid - sales;
+
+  const exportExcel = () => {
+    try {
+      setExportError('');
+      const textCell = (value: string | number, style = '') =>
+        `<Cell${style ? ` ss:StyleID="${style}"` : ''}><Data ss:Type="String">${escapeXml(value)}</Data></Cell>`;
+      const numberCell = (value: number, style = 'Currency') =>
+        `<Cell ss:StyleID="${style}"><Data ss:Type="Number">${value}</Data></Cell>`;
+      const row = (cells: string[]) => `<Row>${cells.join('')}</Row>`;
+      const emptyRow = (count: number, text = 'Bu dönemde kayıt yok') =>
+        row([`<Cell ss:MergeAcross="${count - 1}"><Data ss:Type="String">${escapeXml(text)}</Data></Cell>`]);
+
+      const summaryRows = [
+        ['Yazılan Veresiye', sales],
+        ['Tahsilat / Yükleme', paid],
+        ['Dönem Farkı', periodDifference],
+        ['Restoran Alımları', buy],
+        ['Güncel Açık Borç', -outstanding],
+        ['Güncel Artı Bakiye', creditNow],
+      ] as const;
+
+      const summarySheet = `
+        <Worksheet ss:Name="Özet"><Table>
+          <Column ss:Width="210"/><Column ss:Width="130"/><Column ss:Width="130"/><Column ss:Width="130"/>
+          <Row ss:Height="30"><Cell ss:StyleID="Title" ss:MergeAcross="3"><Data ss:Type="String">Lokanta Veresiye Defteri</Data></Cell></Row>
+          <Row><Cell ss:StyleID="Subtitle" ss:MergeAcross="3"><Data ss:Type="String">${escapeXml(reportPeriodLabel[period])} Raporu | ${escapeXml(periodRange)}</Data></Cell></Row>
+          <Row ss:Height="12"/>
+          ${summaryRows
+            .map(([label, value]) => row([textCell(label, 'Label'), numberCell(value)]))
+            .join('')}
+          <Row ss:Height="12"/>
+          ${row([textCell('Oluşturulma zamanı', 'Label'), textCell(fmtDate(iso()))])}
+        </Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><Selected/><FreezePanes/><FrozenNoSplit/><SplitHorizontal>2</SplitHorizontal><TopRowBottomPane>2</TopRowBottomPane><ActivePane>2</ActivePane><ProtectObjects>False</ProtectObjects><ProtectScenarios>False</ProtectScenarios></WorksheetOptions></Worksheet>`;
+
+      const customerRows = byCustomer.length
+        ? byCustomer
+            .map((item) =>
+              row([
+                textCell(item.c.name),
+                textCell(item.c.phone || '-'),
+                numberCell(item.charge),
+                numberCell(item.payment),
+                numberCell(item.payment - item.charge),
+              ])
+            )
+            .join('')
+        : emptyRow(5);
+      const customerSheet = `
+        <Worksheet ss:Name="Müşteriler"><Table>
+          <Column ss:Width="180"/><Column ss:Width="110"/><Column ss:Width="110"/><Column ss:Width="120"/><Column ss:Width="110"/>
+          ${row([
+            textCell('Müşteri', 'Header'),
+            textCell('Telefon', 'Header'),
+            textCell('Veresiye', 'Header'),
+            textCell('Tahsilat / Yükleme', 'Header'),
+            textCell('Bakiye', 'Header'),
+          ])}
+          ${customerRows}
+        </Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><FreezePanes/><FrozenNoSplit/><SplitHorizontal>1</SplitHorizontal><TopRowBottomPane>1</TopRowBottomPane><ActivePane>2</ActivePane><ProtectObjects>False</ProtectObjects><ProtectScenarios>False</ProtectScenarios></WorksheetOptions></Worksheet>`;
+
+      const movementRows = movements.length
+        ? movements
+            .map((item) =>
+              row([
+                textCell(fmtDate(item.date)),
+                textCell(item.customer),
+                textCell(item.type),
+                textCell(item.detail),
+                numberCell(item.amount),
+              ])
+            )
+            .join('')
+        : emptyRow(5);
+      const movementSheet = `
+        <Worksheet ss:Name="Hareketler"><Table>
+          <Column ss:Width="125"/><Column ss:Width="160"/><Column ss:Width="130"/><Column ss:Width="220"/><Column ss:Width="110"/>
+          ${row([
+            textCell('Tarih', 'Header'),
+            textCell('Müşteri', 'Header'),
+            textCell('İşlem', 'Header'),
+            textCell('Açıklama', 'Header'),
+            textCell('Tutar', 'Header'),
+          ])}
+          ${movementRows}
+        </Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><FreezePanes/><FrozenNoSplit/><SplitHorizontal>1</SplitHorizontal><TopRowBottomPane>1</TopRowBottomPane><ActivePane>2</ActivePane><ProtectObjects>False</ProtectObjects><ProtectScenarios>False</ProtectScenarios></WorksheetOptions></Worksheet>`;
+
+      const purchaseRows = purchases.length
+        ? purchases
+            .map((purchase) =>
+              row([
+                textCell(fmtDate(purchase.date)),
+                textCell(purchase.name),
+                numberCell(purchase.qty, 'Number'),
+                numberCell(purchase.unitCost),
+                numberCell(purchase.qty * purchase.unitCost),
+                textCell(purchase.supplierNote || '-'),
+              ])
+            )
+            .join('')
+        : emptyRow(6);
+      const purchaseSheet = `
+        <Worksheet ss:Name="Alımlar"><Table>
+          <Column ss:Width="110"/><Column ss:Width="170"/><Column ss:Width="70"/><Column ss:Width="105"/><Column ss:Width="110"/><Column ss:Width="180"/>
+          ${row([
+            textCell('Tarih', 'Header'),
+            textCell('Alım', 'Header'),
+            textCell('Miktar', 'Header'),
+            textCell('Birim Fiyat', 'Header'),
+            textCell('Toplam', 'Header'),
+            textCell('Tedarikçi / Not', 'Header'),
+          ])}
+          ${purchaseRows}
+        </Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><FreezePanes/><FrozenNoSplit/><SplitHorizontal>1</SplitHorizontal><TopRowBottomPane>1</TopRowBottomPane><ActivePane>2</ActivePane><ProtectObjects>False</ProtectObjects><ProtectScenarios>False</ProtectScenarios></WorksheetOptions></Worksheet>`;
+
+      const workbook = `<?xml version="1.0" encoding="UTF-8"?>
+        <?mso-application progid="Excel.Sheet"?>
+        <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+          xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:x="urn:schemas-microsoft-com:office:excel"
+          xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+          <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office"><Title>${escapeXml(reportPeriodLabel[period])} Lokanta Raporu</Title><Author>Lokanta Veresiye Defteri</Author></DocumentProperties>
+          <Styles>
+            <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="Arial" ss:Size="10"/></Style>
+            <Style ss:ID="Title"><Font ss:FontName="Arial" ss:Size="18" ss:Bold="1" ss:Color="#17483D"/></Style>
+            <Style ss:ID="Subtitle"><Font ss:FontName="Arial" ss:Size="11" ss:Color="#66736E"/></Style>
+            <Style ss:ID="Header"><Alignment ss:Vertical="Center"/><Font ss:FontName="Arial" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#17483D" ss:Pattern="Solid"/></Style>
+            <Style ss:ID="Label"><Font ss:FontName="Arial" ss:Bold="1" ss:Color="#41554E"/><Interior ss:Color="#E8F0ED" ss:Pattern="Solid"/></Style>
+            <Style ss:ID="Currency"><Alignment ss:Horizontal="Right"/><NumberFormat ss:Format="&quot;₺&quot;#,##0.00;[Red]-&quot;₺&quot;#,##0.00"/></Style>
+            <Style ss:ID="Number"><Alignment ss:Horizontal="Right"/><NumberFormat ss:Format="#,##0.00"/></Style>
+          </Styles>
+          ${summarySheet}${customerSheet}${movementSheet}${purchaseSheet}
+        </Workbook>`;
+
+      downloadFile(
+        ['\ufeff', workbook],
+        `${filename}.xls`,
+        'application/vnd.ms-excel;charset=utf-8'
+      );
+    } catch {
+      setExportError('Excel dosyası oluşturulamadı. Lütfen tekrar deneyin.');
+    }
+  };
+
+  const exportPdf = () => {
+    setExportError('');
+    const printWindow = window.open('', '_blank', 'width=1100,height=800');
+    if (!printWindow) {
+      setExportError('PDF görünümü açılamadı. Tarayıcıda açılır pencerelere izin verin.');
+      return;
+    }
+
+    const summaryCards = [
+      ['Yazılan Veresiye', money(sales)],
+      ['Tahsilat / Yükleme', money(paid)],
+      ['Dönem Farkı', balanceLabel(sales - paid).text],
+      ['Restoran Alımları', money(buy)],
+      ['Güncel Açık Borç', outstanding > 0.009 ? `-${money(outstanding)}` : money(0)],
+      ['Güncel Artı Bakiye', creditNow > 0.009 ? `+${money(creditNow)}` : money(0)],
+    ];
+    const customerTable = byCustomer.length
+      ? byCustomer
+          .map(
+            (item) => `<tr><td>${escapeHtml(item.c.name)}</td><td>${escapeHtml(item.c.phone || '-')}</td><td>${escapeHtml(money(item.charge))}</td><td>${escapeHtml(money(item.payment))}</td><td class="${item.payment - item.charge >= 0 ? 'positive' : 'negative'}">${escapeHtml(balanceLabel(item.charge - item.payment).text)}</td></tr>`
+          )
+          .join('')
+      : '<tr><td colspan="5" class="empty-row">Bu dönemde müşteri hareketi yok.</td></tr>';
+    const movementTable = movements.length
+      ? movements
+          .map(
+            (item) => `<tr><td>${escapeHtml(fmtDate(item.date))}</td><td>${escapeHtml(item.customer)}</td><td>${escapeHtml(item.type)}</td><td>${escapeHtml(item.detail)}</td><td class="${item.amount >= 0 ? 'positive' : 'negative'}">${escapeHtml(item.amount >= 0 ? `+${money(item.amount)}` : `-${money(-item.amount)}`)}</td></tr>`
+          )
+          .join('')
+      : '<tr><td colspan="5" class="empty-row">Bu dönemde hesap hareketi yok.</td></tr>';
+    const purchaseTable = purchases.length
+      ? purchases
+          .map(
+            (purchase) => `<tr><td>${escapeHtml(fmtDate(purchase.date))}</td><td>${escapeHtml(purchase.name)}</td><td>${escapeHtml(purchase.qty)}</td><td>${escapeHtml(money(purchase.unitCost))}</td><td>${escapeHtml(money(purchase.qty * purchase.unitCost))}</td><td>${escapeHtml(purchase.supplierNote || '-')}</td></tr>`
+          )
+          .join('')
+      : '<tr><td colspan="6" class="empty-row">Bu dönemde alım yok.</td></tr>';
+
+    printWindow.document.write(`<!doctype html><html lang="tr"><head><meta charset="UTF-8"><title>${escapeHtml(reportPeriodLabel[period])} Lokanta Raporu</title><style>
+      @page { size: A4; margin: 14mm; }
+      * { box-sizing: border-box; }
+      body { margin: 0; color: #18231f; font: 12px Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      header { display: flex; justify-content: space-between; gap: 20px; align-items: flex-end; padding-bottom: 18px; border-bottom: 2px solid #17483d; }
+      h1 { margin: 0; color: #17483d; font-size: 24px; }
+      header p { margin: 5px 0 0; color: #66736e; }
+      .generated { text-align: right; color: #66736e; font-size: 10px; }
+      .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 18px 0 22px; }
+      .summary div { padding: 11px 12px; border: 1px solid #dbe4e0; border-radius: 8px; background: #f3f7f5; }
+      .summary span { display: block; color: #66736e; font-size: 9px; margin-bottom: 4px; }
+      .summary strong { color: #17483d; font-size: 15px; }
+      section { margin-top: 22px; break-inside: avoid; }
+      h2 { margin: 0 0 9px; font-size: 15px; color: #18231f; }
+      table { width: 100%; border-collapse: collapse; table-layout: auto; }
+      th { padding: 7px 8px; color: #fff; background: #17483d; text-align: left; font-size: 9px; }
+      td { padding: 7px 8px; border-bottom: 1px solid #e5ece9; vertical-align: top; }
+      th:nth-last-child(-n+3), td:nth-last-child(-n+3) { text-align: right; }
+      .positive { color: #2f785b; font-weight: 700; }
+      .negative { color: #b74640; font-weight: 700; }
+      .empty-row { text-align: center !important; color: #66736e; padding: 16px; }
+      footer { margin-top: 24px; padding-top: 9px; border-top: 1px solid #dbe4e0; color: #66736e; font-size: 9px; }
+      @media print { .no-print { display: none; } thead { display: table-header-group; } tr { break-inside: avoid; } }
+    </style></head><body>
+      <header><div><h1>Lokanta Veresiye Defteri</h1><p>${escapeHtml(reportPeriodLabel[period])} Raporu | ${escapeHtml(periodRange)}</p></div><div class="generated">Oluşturulma zamanı<br>${escapeHtml(fmtDate(iso()))}</div></header>
+      <div class="summary">${summaryCards.map(([label, value]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('')}</div>
+      <section><h2>Müşteri Dökümü</h2><table><thead><tr><th>Müşteri</th><th>Telefon</th><th>Veresiye</th><th>Tahsilat / Yükleme</th><th>Bakiye</th></tr></thead><tbody>${customerTable}</tbody></table></section>
+      <section><h2>Hesap Hareketleri</h2><table><thead><tr><th>Tarih</th><th>Müşteri</th><th>İşlem</th><th>Açıklama</th><th>Tutar</th></tr></thead><tbody>${movementTable}</tbody></table></section>
+      <section><h2>Restoran Alımları</h2><table><thead><tr><th>Tarih</th><th>Alım</th><th>Miktar</th><th>Birim Fiyat</th><th>Toplam</th><th>Tedarikçi / Not</th></tr></thead><tbody>${purchaseTable}</tbody></table></section>
+      <footer>Bu rapor Lokanta Veresiye Defteri tarafından oluşturuldu.</footer>
+    </body></html>`);
+    printWindow.document.close();
+    window.setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+    }, 300);
+  };
+
   return (
     <>
       <div className="toolbar">
         <div className="tabs scroll-tabs">
           {(
             [
-              ['day', 'Günlük'],
+              ['day', 'Gün Sonu'],
               ['week', 'Haftalık'],
               ['month', 'Aylık'],
             ] as const
@@ -1559,10 +1851,25 @@ function Reports({ data }: { data: AppData }) {
             </button>
           ))}
         </div>
-        <span className="range">
-          {fmtDate(start.toISOString())} tarihinden itibaren
-        </span>
+        <div className="report-actions">
+          <span className="range">{periodRange}</span>
+          <button
+            className="secondary export-button"
+            onClick={exportPdf}
+            title="Yazdırma penceresinden PDF olarak kaydedin"
+          >
+            <FileText size={17} /> PDF / Yazdır
+          </button>
+          <button className="primary export-button" onClick={exportExcel}>
+            <FileSpreadsheet size={17} /> Excel İndir
+          </button>
+        </div>
       </div>
+      {exportError && (
+        <p className="export-error" role="alert">
+          {exportError}
+        </p>
+      )}
       <div className="stats report">
         <Stat
           label="Yazılan Veresiye"
@@ -1578,7 +1885,7 @@ function Reports({ data }: { data: AppData }) {
         />
         <Stat
           label="Dönem Farkı"
-          value={money(sales - paid)}
+          value={balanceLabel(sales - paid).text}
           icon={BarChart3}
           tone="blue"
         />
