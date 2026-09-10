@@ -1,0 +1,89 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e12]:
+      - strong [ref=e13]: Lokanta
+      - generic [ref=e14]: Veresiye Defteri
+    - navigation [ref=e15]:
+      - button "Ana Sayfa" [ref=e16] [cursor=pointer]
+      - button "Müşteriler" [ref=e21] [cursor=pointer]
+      - button "Menü" [ref=e28] [cursor=pointer]
+      - button "Raporlar" [ref=e35] [cursor=pointer]
+      - button "Alımlar" [ref=e39] [cursor=pointer]
+    - generic [ref=e47]: Tarayıcı • localStorage
+  - main [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e56]:
+        - paragraph [ref=e57]: RESTORAN YÖNETİMİ
+        - heading "Ana Sayfa" [level=1] [ref=e58]
+      - generic [ref=e59]: 10 Eylül Perşembe
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e65]:
+          - paragraph [ref=e66]: HIZLI İŞLEM
+          - heading "Masadan deftere, iki tıkta." [level=2] [ref=e67]
+          - paragraph [ref=e68]: Müşteri seçin, ürünleri ekleyin ve hesabı kaydedin.
+        - button "Yeni Veresiye Ekle" [ref=e69] [cursor=pointer]
+      - generic [ref=e71]:
+        - generic [ref=e78]:
+          - generic [ref=e79]: Toplam Açık Bakiye
+          - strong [ref=e80]: ₺730,00
+        - generic [ref=e85]:
+          - generic [ref=e86]: Bugünkü Veresiye
+          - strong [ref=e87]: ₺880,00
+        - generic [ref=e92]:
+          - generic [ref=e93]: Bugün Tahsilat / Yükleme
+          - strong [ref=e94]: ₺660,00
+        - generic [ref=e101]:
+          - generic [ref=e102]: Toplam Artı Bakiye
+          - strong [ref=e103]: ₺90,00
+      - generic [ref=e104]:
+        - generic [ref=e105]:
+          - generic [ref=e106]:
+            - heading "Açık Hesaplar" [level=2] [ref=e107]
+            - paragraph [ref=e108]: 4 müşteri • Alımlar bugün ₺4.080,00
+          - button "Hızlı Ekle" [ref=e109] [cursor=pointer]
+        - table [ref=e112]:
+          - rowgroup [ref=e113]:
+            - row [ref=e114]:
+              - columnheader "Müşteri" [ref=e115]
+              - columnheader "Telefon" [ref=e116]
+              - columnheader "Son işlem" [ref=e117]
+              - columnheader "Bakiye" [ref=e118]
+              - columnheader [ref=e119]
+          - rowgroup [ref=e120]:
+            - row [ref=e121] [cursor=pointer]:
+              - cell "MU Mehmet Usta" [ref=e122]:
+                - generic [ref=e123]: MU
+                - generic [ref=e124]: Mehmet Usta
+              - cell "-" [ref=e125]
+              - cell "10 Eyl 2026 13:31" [ref=e126]
+              - cell "₺300,00" [ref=e127]
+              - cell [ref=e128]:
+                - button "Mehmet Usta hesabını aç" [ref=e129]
+            - row [ref=e132] [cursor=pointer]:
+              - cell "DA Derya Aksoy" [ref=e133]:
+                - generic [ref=e134]: DA
+                - generic [ref=e135]: Derya Aksoy
+              - cell "0541 286 41 90" [ref=e136]
+              - cell "09 Eyl 2026 17:31" [ref=e137]
+              - cell "₺220,00" [ref=e138]
+              - cell [ref=e139]:
+                - button "Derya Aksoy hesabını aç" [ref=e140]
+            - row [ref=e143] [cursor=pointer]:
+              - cell "AY Ahmet Yılmaz" [ref=e144]:
+                - generic [ref=e145]: AY
+                - generic [ref=e146]: Ahmet Yılmaz
+              - cell "0532 111 22 33" [ref=e147]
+              - cell "10 Eyl 2026 15:31" [ref=e148]
+              - cell "₺210,00" [ref=e149]
+              - cell [ref=e150]:
+                - button "Ahmet Yılmaz hesabını aç" [ref=e151]
+            - row [ref=e154] [cursor=pointer]:
+              - cell "ZH Zeynep Hanım" [ref=e155]:
+                - generic [ref=e156]: ZH
+                - generic [ref=e157]: Zeynep Hanım
+              - cell "-" [ref=e158]
+              - cell "10 Eyl 2026 11:31" [ref=e159]
+              - cell "-₺90,00 kredi" [ref=e160]
+              - cell [ref=e161]:
+                - button "Zeynep Hanım hesabını aç" [ref=e162]

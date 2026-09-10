@@ -1,0 +1,47 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e12]:
+      - strong [ref=e13]: Lokanta
+      - generic [ref=e14]: Veresiye Defteri
+    - navigation [ref=e15]:
+      - button "Ana Sayfa" [ref=e16] [cursor=pointer]
+      - button "Müşteriler" [ref=e21] [cursor=pointer]
+      - button "Menü" [ref=e28] [cursor=pointer]
+      - button "Raporlar" [ref=e35] [cursor=pointer]
+      - button "Alımlar" [ref=e39] [cursor=pointer]
+    - generic [ref=e47]: Tarayıcı • localStorage
+  - main [ref=e53]:
+    - generic [ref=e54]:
+      - generic [ref=e56]:
+        - paragraph [ref=e57]: RESTORAN YÖNETİMİ
+        - heading "Ana Sayfa" [level=1] [ref=e58]
+      - generic [ref=e59]: 10 Eylül Perşembe
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e65]:
+          - paragraph [ref=e66]: HIZLI İŞLEM
+          - heading "Masadan deftere, iki tıkta." [level=2] [ref=e67]
+          - paragraph [ref=e68]: Müşteri seçin, ürünleri ekleyin ve hesabı kaydedin.
+        - button "Yeni Veresiye Ekle" [ref=e69] [cursor=pointer]
+      - generic [ref=e71]:
+        - generic [ref=e78]:
+          - generic [ref=e79]: Toplam Açık Bakiye
+          - strong [ref=e80]: ₺0,00
+        - generic [ref=e85]:
+          - generic [ref=e86]: Bugünkü Veresiye
+          - strong [ref=e87]: ₺0,00
+        - generic [ref=e92]:
+          - generic [ref=e93]: Bugün Tahsilat / Yükleme
+          - strong [ref=e94]: ₺0,00
+        - generic [ref=e101]:
+          - generic [ref=e102]: Toplam Artı Bakiye
+          - strong [ref=e103]: ₺0,00
+      - generic [ref=e104]:
+        - generic [ref=e105]:
+          - generic [ref=e106]:
+            - heading "Açık Hesaplar" [level=2] [ref=e107]
+            - paragraph [ref=e108]: 0 müşteri • Alımlar bugün ₺0,00
+          - button "Hızlı Ekle" [ref=e109] [cursor=pointer]
+        - generic [ref=e111]:
+          - generic [ref=e114]: Açık hesap yok
+          - generic [ref=e115]: Yeni veresiye eklemek için üstteki düğmeyi kullanın.

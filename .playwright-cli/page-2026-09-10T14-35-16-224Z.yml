@@ -1,0 +1,98 @@
+- generic [ref=f1e3]:
+  - complementary [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - generic [ref=f1e12]:
+        - strong [ref=f1e13]: Lokanta
+        - generic [ref=f1e14]: Veresiye Defteri
+      - button "Kapat" [ref=f1e15] [cursor=pointer]
+    - navigation [ref=f1e19]:
+      - button "Ana Sayfa" [ref=f1e20] [cursor=pointer]
+      - button "Müşteriler" [ref=f1e25] [cursor=pointer]
+      - button "Menü" [ref=f1e32] [cursor=pointer]
+      - button "Raporlar" [ref=f1e39] [cursor=pointer]
+      - button "Alımlar" [ref=f1e43] [cursor=pointer]
+    - generic [ref=f1e51]: Tarayıcı • localStorage
+  - main [ref=f1e57]:
+    - generic [ref=f1e59]:
+      - button "Menü" [ref=f1e60] [cursor=pointer]
+      - generic [ref=f1e62]:
+        - paragraph [ref=f1e63]: RESTORAN YÖNETİMİ
+        - heading "Müşteriler" [level=1] [ref=f1e181]
+    - generic [ref=f1e68]:
+      - generic [ref=f1e182]:
+        - textbox "İsim veya telefon ara…" [ref=f1e187]
+        - button "Yeni Müşteri" [ref=f1e188] [cursor=pointer]
+      - generic [ref=f1e190]:
+        - article [ref=f1e191]:
+          - generic [ref=f1e192]:
+            - generic [ref=f1e193]: AY
+            - generic [ref=f1e194]:
+              - heading "Ahmet Yılmaz" [level=3] [ref=f1e195]
+              - text: 0532 111 22 33
+            - button "Ahmet Yılmaz müşterisini düzenle" [ref=f1e196] [cursor=pointer]
+          - paragraph [ref=f1e200]: Esnaf, cuma günü kapatır
+          - generic [ref=f1e201]:
+            - generic [ref=f1e202]: Güncel bakiye
+            - strong [ref=f1e203]: ₺210,00
+          - generic [ref=f1e204]:
+            - button "Hesabı Aç" [ref=f1e205] [cursor=pointer]
+            - button "Ahmet Yılmaz müşterisini sil" [ref=f1e208] [cursor=pointer]
+        - article [ref=f1e212]:
+          - generic [ref=f1e213]:
+            - generic [ref=f1e214]: DA
+            - generic [ref=f1e215]:
+              - heading "Derya Aksoy" [level=3] [ref=f1e216]
+              - text: 0541 286 41 90
+            - button "Derya Aksoy müşterisini düzenle" [ref=f1e217] [cursor=pointer]
+          - paragraph [ref=f1e221]: Ödemeyi haftalık yapar
+          - generic [ref=f1e222]:
+            - generic [ref=f1e223]: Güncel bakiye
+            - strong [ref=f1e224]: ₺220,00
+          - generic [ref=f1e225]:
+            - button "Hesabı Aç" [ref=f1e226] [cursor=pointer]
+            - button "Derya Aksoy müşterisini sil" [ref=f1e229] [cursor=pointer]
+        - article [ref=f1e233]:
+          - generic [ref=f1e234]:
+            - generic [ref=f1e235]: MU
+            - generic [ref=f1e236]:
+              - heading "Mehmet Usta" [level=3] [ref=f1e237]
+              - text: Telefon yok
+            - button "Mehmet Usta müşterisini düzenle" [ref=f1e238] [cursor=pointer]
+          - generic [ref=f1e242]:
+            - generic [ref=f1e243]: Güncel bakiye
+            - strong [ref=f1e244]: ₺300,00
+          - generic [ref=f1e245]:
+            - button "Hesabı Aç" [ref=f1e246] [cursor=pointer]
+            - button "Mehmet Usta müşterisini sil" [ref=f1e249] [cursor=pointer]
+        - article [ref=f1e253]:
+          - generic [ref=f1e254]:
+            - generic [ref=f1e255]: MÇ
+            - generic [ref=f1e256]:
+              - heading "Murat Çelik" [level=3] [ref=f1e257]
+              - text: 0538 704 18 26
+            - button "Murat Çelik müşterisini düzenle" [ref=f1e258] [cursor=pointer]
+          - generic [ref=f1e262]:
+            - generic [ref=f1e263]: Güncel bakiye
+            - strong [ref=f1e264]: ₺0,00
+          - generic [ref=f1e265]:
+            - button "Hesabı Aç" [ref=f1e266] [cursor=pointer]
+            - button "Murat Çelik müşterisini sil" [ref=f1e269] [cursor=pointer]
+        - article [ref=f1e273]:
+          - generic [ref=f1e274]:
+            - generic [ref=f1e275]: ZH
+            - generic [ref=f1e276]:
+              - heading "Zeynep Hanım" [level=3] [ref=f1e277]
+              - text: Telefon yok
+            - button "Zeynep Hanım müşterisini düzenle" [ref=f1e278] [cursor=pointer]
+          - generic [ref=f1e282]:
+            - generic [ref=f1e283]: Güncel bakiye
+            - strong [ref=f1e284]: "-₺90,00 kredi"
+          - generic [ref=f1e285]:
+            - button "Hesabı Aç" [ref=f1e286] [cursor=pointer]
+            - button "Zeynep Hanım müşterisini sil" [ref=f1e289] [cursor=pointer]
+  - navigation "Alt menü" [ref=f1e149]:
+    - button "Ana" [ref=f1e150] [cursor=pointer]
+    - button "Müşteriler" [ref=f1e155] [cursor=pointer]
+    - button "Menü" [ref=f1e162] [cursor=pointer]
+    - button "Raporlar" [ref=f1e169] [cursor=pointer]
+    - button "Alımlar" [ref=f1e173] [cursor=pointer]
